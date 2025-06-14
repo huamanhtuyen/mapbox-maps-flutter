@@ -173,6 +173,10 @@ class MapboxMap extends ChangeNotifier {
   late final _ViewportMessenger _viewportMessenger = _ViewportMessenger(
       binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
       messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
+  late final _PerformanceStatisticsApi _performanceStatistics =
+      _PerformanceStatisticsApi(
+          binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
+          messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
 
   /// The interface to create and set annotations.
   late final AnnotationManager annotations;
@@ -222,7 +226,9 @@ class MapboxMap extends ChangeNotifier {
     GestureListener.setUp(null,
         binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
         messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
-
+    PerformanceStatisticsListener.setUp(null,
+        binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
+        messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
     super.dispose();
   }
 
@@ -452,7 +458,6 @@ class MapboxMap extends ChangeNotifier {
           options);
 
   /// Queries the map for rendered features with one typed featureset.
-  @experimental
   Future<List<FeaturesetFeature>> queryRenderedFeaturesForFeatureset(
       {required FeaturesetDescriptor featureset,
       RenderedQueryGeometry? geometry,
@@ -510,7 +515,6 @@ class MapboxMap extends ChangeNotifier {
   /// Update the state map of a feature within a featureset.
   /// Update entries in the state map of a given feature within a style source. Only entries listed in the state map
   /// will be updated. An entry in the feature state map that is not listed in `state` will retain its previous value.
-  @experimental
   Future<void> setFeatureStateForFeaturesetDescriptor(
           FeaturesetDescriptor featureset,
           FeaturesetFeatureId featureId,
@@ -522,7 +526,6 @@ class MapboxMap extends ChangeNotifier {
   ///
   /// The feature should have a non-nil ``FeaturesetFeatureType/id``. Otherwise,
   /// the operation will be no-op and callback will receive an error.
-  @experimental
   Future<void> setFeatureStateForFeaturesetFeature(
           FeaturesetFeature feature, FeatureState state) =>
       _mapInterface.setFeatureStateForFeaturesetFeature(feature, state.map);
@@ -536,14 +539,12 @@ class MapboxMap extends ChangeNotifier {
       _mapInterface.getFeatureState(sourceId, sourceLayerId, featureId);
 
   /// Get the state map of a feature within a style source.
-  @experimental
   Future<Map<String, Object?>> getFeatureStateForFeaturesetDescriptor(
           FeaturesetDescriptor featureset, FeaturesetFeatureId featureId) =>
       _mapInterface.getFeatureStateForFeaturesetDescriptor(
           featureset, featureId);
 
   /// Get the state map of a feature within a style source.
-  @experimental
   Future<Map<String, Object?>> getFeatureStateForFeaturesetFeature(
           FeaturesetFeature feature) =>
       _mapInterface.getFeatureStateForFeaturesetFeature(feature);
@@ -562,7 +563,6 @@ class MapboxMap extends ChangeNotifier {
 
   /// Removes entries from a feature state object of a feature in the specified featureset.
   /// Remove a specified property or all property from a feature's state object, depending on the value of `stateKey`.
-  @experimental
   Future<void> removeFeatureStateForFeaturesetDescriptor(
           {required FeaturesetDescriptor featureset,
           required FeaturesetFeatureId featureId,
@@ -572,7 +572,6 @@ class MapboxMap extends ChangeNotifier {
 
   /// Removes entries from a specified Feature.
   /// Remove a specified property or all property from a feature's state object, depending on the value of `stateKey`.
-  @experimental
   Future<void> removeFeatureStateForFeaturesetFeature(
           {required FeaturesetFeature feature, String? stateKey}) =>
       _mapInterface.removeFeatureStateForFeaturesetFeature(feature, stateKey);
@@ -581,19 +580,16 @@ class MapboxMap extends ChangeNotifier {
   ///
   /// Note that updates to feature state are asynchronous, so changes made by this method might not be
   /// immediately visible using ``MapboxMap/getFeatureState(_:callback:)``.
-  @experimental
   Future<void> resetFeatureStatesForFeatureset(
           FeaturesetDescriptor featureset) =>
       _mapInterface.resetFeatureStatesForFeatureset(featureset);
 
   /// References for all interactions added to the map.
-  @experimental
   final _InteractionsMap _interactionsMap = _InteractionsMap(interactions: {});
 
   /// Add an interaction to the map
   /// An identifier can be provided, which you can use to remove
   /// the interaction with `.removeInteraction(interactionID)`
-  @experimental
   void addInteraction<T extends TypedFeaturesetFeature<FeaturesetDescriptor>>(
       TypedInteraction<T> interaction,
       {String? interactionID}) {
@@ -610,7 +606,6 @@ class MapboxMap extends ChangeNotifier {
 
   /// Remove an interaction from the map with the given interactionID
   /// that was passed with `.addInteraction(interaction, interactionID)`
-  @experimental
   void removeInteraction(String interactionID) {
     _interactionsMap.interactions.remove(interactionID);
     _mapboxMapsPlatform.removeInteractionsListeners(interactionID);
@@ -729,6 +724,65 @@ class MapboxMap extends ChangeNotifier {
           messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
       _mapboxMapsPlatform.addGestureListeners();
     }
+  }
+
+  /// Collects CPU and GPU resource usage, as well as timings of layers and rendering groups, over a user-configurable sampling duration.
+  /// Use the collected information to identify layers or rendering groups that may be performing poorly.
+  ///
+  /// Use ``PerformanceStatisticsOptions`` to configure the following collection behaviours:
+  ///     - Which types of sampling to perform, whether cumulative, per-frame, or both.
+  ///     - Duration of sampling in milliseconds. A value of 0 forces the collection of performance statistics every frame.
+  ///
+  /// The statistics collection can be canceled by calling [stopPerformanceStatisticsCollection]. Canceling collection will prevent the listener
+  /// callback from being called. Collection can be restarted by calling [startPerformanceStatisticsCollection] again.
+  ///
+  /// The callback function will be called every time the configured sampling duration [PerformanceStatisticsOptions.samplingDurationMillis] has elapsed.
+  ///
+  /// - Parameters:
+  ///   - options The statistics collection options to collect.
+  ///   - callback The callback to be invoked when performance statistics are available.
+  /// Enable real-time collection of map rendering performance statistics, for development purposes. Use after `render()` has
+  /// been called for the first time.
+  ///
+  /// Collects CPU, GPU resource usage and timings of layers and rendering groups over a user-configurable sampling duration.
+  /// Use the collected information to find which layers or rendering groups might be performing poorly. Use
+  /// [PerformanceStatisticsOptions] to configure the following statistics collection behaviors:
+  /// <ul>
+  ///     <li>Specify the types of sampling: cumulative, per-frame, or both.</li>
+  ///     <li>Define the minimum amount of time over which to perform sampling.</li>
+  /// </ul>
+  ///
+  /// Utilize [PerformanceStatisticsListener] to observe the collected performance statistics. The callback function is invoked
+  /// after the configured sampling duration has elapsed. The collection process is continuous; without user-input,
+  /// it restarts after each callback invocation. Note: Specifying a negative sampling duration
+  /// or omitting the callback function will result in no operation, which will be logged for visibility.
+  ///
+  /// In order to stop the collection process, call [stopPerformanceStatisticsCollection].
+  /// After calling [startPerformanceStatisticsCollection], [stopPerformanceStatisticsCollection] must be called before collection can be
+  /// restarted.
+  @experimental
+  void startPerformanceStatisticsCollection(
+      PerformanceStatisticsOptions options,
+      PerformanceStatisticsListener listener) {
+    PerformanceStatisticsListener.setUp(listener,
+        binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
+        messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
+
+    _performanceStatistics.startPerformanceStatisticsCollection(options);
+  }
+
+  /// Disable performance statistics collection.
+  ///
+  /// Calling [stopPerformanceStatisticsCollection] when no collection is enabled is a no-op. After calling
+  /// [startPerformanceStatisticsCollection], [stopPerformanceStatisticsCollection] must be called before collection can be
+  /// restarted.
+  @experimental
+  void stopPerformanceStatisticsCollection() {
+    _performanceStatistics.stopPerformanceStatisticsCollection();
+
+    PerformanceStatisticsListener.setUp(null,
+        binaryMessenger: _mapboxMapsPlatform.binaryMessenger,
+        messageChannelSuffix: _mapboxMapsPlatform.channelSuffix.toString());
   }
 
   void setOnMapTapListener(OnMapTapListener? onMapTapListener) {

@@ -24,7 +24,7 @@ class AnnotationClickListener extends OnCircleAnnotationClickListener {
 
   @override
   void onCircleAnnotationClick(CircleAnnotation annotation) {
-    print("onAnnotationClick, id: ${annotation.id}");
+    debugPrint("onAnnotationClick, id: ${annotation.id}");
     onAnnotationClick(annotation);
   }
 }
@@ -48,9 +48,11 @@ class CircleAnnotationExampleState extends State<CircleAnnotationExample> {
       var options = <CircleAnnotationOptions>[];
       for (var i = 0; i < 2000; i++) {
         options.add(CircleAnnotationOptions(
-            geometry: createRandomPoint(),
-            circleColor: createRandomColor(),
-            circleRadius: 8.0));
+          geometry: createRandomPoint(),
+          circleColor: createRandomColor(),
+          circleRadius: 8.0,
+          isDraggable: true,
+        ));
       }
       circleAnnotationManager?.createMulti(options);
       circleAnnotationManager?.addOnCircleAnnotationClickListener(
@@ -71,6 +73,7 @@ class CircleAnnotationExampleState extends State<CircleAnnotationExample> {
           )),
           circleColor: Colors.yellow.value,
           circleRadius: 12.0,
+          isDraggable: true,
         ))
         .then((value) => circleAnnotation = value);
     ;

@@ -10,4 +10,5 @@ analyzer:
   errors:
     library_private_types_in_public_api: error
 
+
 # Additional information can be found at https://dart.dev/guides/language/analysis-options

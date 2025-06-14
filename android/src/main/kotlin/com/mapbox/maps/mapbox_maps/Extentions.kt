@@ -31,6 +31,19 @@ import java.io.ByteArrayOutputStream
 
 // FLT to Android
 
+fun PerformanceStatisticsOptions.toPerformanceStatisticsOptions(): com.mapbox.maps.PerformanceStatisticsOptions {
+  return com.mapbox.maps.PerformanceStatisticsOptions.Builder()
+    .samplerOptions(samplerOptions.map { it.toPerformanceSamplerOptions() })
+    .samplingDurationMillis(samplingDurationMillis).build()
+}
+
+fun PerformanceSamplerOptions.toPerformanceSamplerOptions(): com.mapbox.maps.PerformanceSamplerOptions {
+  return when (this) {
+    PerformanceSamplerOptions.CUMULATIVE -> com.mapbox.maps.PerformanceSamplerOptions.CUMULATIVE_RENDERING_STATS
+    PerformanceSamplerOptions.PER_FRAME -> com.mapbox.maps.PerformanceSamplerOptions.PER_FRAME_RENDERING_STATS
+  }
+}
+
 fun _MapWidgetDebugOptions.toMapViewDebugOptions(): MapViewDebugOptions {
   return when (this) {
     _MapWidgetDebugOptions.TILE_BORDERS -> MapViewDebugOptions.TILE_BORDERS
@@ -100,6 +113,13 @@ fun ModelScaleMode.toModelScaleMode(): com.mapbox.maps.plugin.ModelScaleMode {
   return when (this) {
     ModelScaleMode.VIEWPORT -> com.mapbox.maps.plugin.ModelScaleMode.VIEWPORT
     ModelScaleMode.MAP -> com.mapbox.maps.plugin.ModelScaleMode.MAP
+  }
+}
+
+fun ModelElevationReference.toModelElevationReference(): com.mapbox.maps.plugin.ModelElevationReference {
+  return when (this) {
+    ModelElevationReference.GROUND -> com.mapbox.maps.plugin.ModelElevationReference.GROUND
+    ModelElevationReference.SEA -> com.mapbox.maps.plugin.ModelElevationReference.SEA
   }
 }
 
@@ -431,33 +451,33 @@ fun Geometry.toMap(): Map<String?, Any?> {
   return when (this) {
     is Point -> mapOf(
       "type" to "Point",
-      "coordinates" to listOf(this.latitude(), this.longitude())
+      "coordinates" to listOf(this.longitude(), this.latitude())
     )
     is LineString -> mapOf(
       "type" to "LineString",
-      "coordinates" to this.coordinates().map { listOf(it.latitude(), it.longitude()) }
+      "coordinates" to this.coordinates().map { listOf(it.longitude(), it.latitude()) }
     )
     is Polygon -> mapOf(
       "type" to "Polygon",
       "coordinates" to this.coordinates().map { ring ->
-        ring.map { listOf(it.latitude(), it.longitude()) }
+        ring.map { listOf(it.longitude(), it.latitude()) }
       }
     )
     is MultiPoint -> mapOf(
       "type" to "MultiPoint",
-      "coordinates" to this.coordinates().map { listOf(it.latitude(), it.longitude()) }
+      "coordinates" to this.coordinates().map { listOf(it.longitude(), it.latitude()) }
     )
     is MultiLineString -> mapOf(
       "type" to "MultiLineString",
       "coordinates" to this.coordinates().map { line ->
-        line.map { listOf(it.latitude(), it.longitude()) }
+        line.map { listOf(it.longitude(), it.latitude()) }
       }
     )
     is MultiPolygon -> mapOf(
       "type" to "MultiPolygon",
       "coordinates" to this.coordinates().map { polygon ->
         polygon.map { ring ->
-          ring.map { listOf(it.latitude(), it.longitude()) }
+          ring.map { listOf(it.longitude(), it.latitude()) }
         }
       }
     )
@@ -505,6 +525,43 @@ fun Number.toDevicePixels(context: Context): Float {
 
 // Android to FLT
 
+fun com.mapbox.maps.PerformanceStatistics.toPerformanceStatistics(): PerformanceStatistics {
+  return PerformanceStatistics(
+    collectionDurationMillis = collectionDurationMillis,
+    mapRenderDurationStatistics = mapRenderDurationStatistics.toDurationStatistics(),
+    cumulativeStatistics = cumulativeStatistics?.toCumulativeRenderingStatistics(),
+    perFrameStatistics = perFrameStatistics?.toPerFrameRenderingStatistics()
+  )
+}
+
+fun com.mapbox.maps.DurationStatistics.toDurationStatistics(): DurationStatistics {
+  return DurationStatistics(maxMillis = maxMillis, medianMillis = medianMillis)
+}
+
+fun com.mapbox.maps.CumulativeRenderingStatistics.toCumulativeRenderingStatistics(): CumulativeRenderingStatistics {
+  return CumulativeRenderingStatistics(
+    drawCalls = drawCalls,
+    textureBytes = textureBytes,
+    vertexBytes = vertexBytes,
+    graphicsPrograms = graphicsPrograms,
+    graphicsProgramsCreationTimeMillis = graphicsProgramsCreationTimeMillis,
+    fboSwitchCount = fboSwitchCount
+  )
+}
+
+fun com.mapbox.maps.PerFrameRenderingStatistics.toPerFrameRenderingStatistics(): PerFrameRenderingStatistics {
+  return PerFrameRenderingStatistics(
+    topRenderGroups = topRenderGroups.map { it.toGroupPerformanceStatistics() },
+    topRenderLayers = topRenderLayers.map { it.toGroupPerformanceStatistics() },
+    shadowMapDurationStatistics = shadowMapDurationStatistics.toDurationStatistics(),
+    uploadDurationStatistics = uploadDurationStatistics.toDurationStatistics()
+  )
+}
+
+fun com.mapbox.maps.GroupPerformanceStatistics.toGroupPerformanceStatistics(): GroupPerformanceStatistics {
+  return GroupPerformanceStatistics(durationMillis = durationMillis, name = name)
+}
+
 fun MapViewDebugOptions.toFLTDebugOptions(): _MapWidgetDebugOptions? {
   return when (this) {
     MapViewDebugOptions.TILE_BORDERS -> _MapWidgetDebugOptions.TILE_BORDERS
@@ -547,8 +604,16 @@ fun com.mapbox.maps.plugin.ModelScaleMode.toFLTModelScaleMode(): ModelScaleMode 
     else -> { throw java.lang.RuntimeException("Scale mode not supported: $this") }
   }
 }
+fun com.mapbox.maps.plugin.ModelElevationReference.toFLTModelElevationReference(): ModelElevationReference {
+  return when (this) {
+    com.mapbox.maps.plugin.ModelElevationReference.GROUND -> ModelElevationReference.GROUND
+    com.mapbox.maps.plugin.ModelElevationReference.SEA -> ModelElevationReference.SEA
+    else -> { throw java.lang.RuntimeException("Model Elevation Reference not supported: $this") }
+  }
+}
+
 fun com.mapbox.maps.StylePropertyValue.toFLTStylePropertyValue(): StylePropertyValue {
-  return StylePropertyValue(value.toJson(), StylePropertyValueKind.values()[kind.ordinal])
+  return StylePropertyValue(value.contents, StylePropertyValueKind.values()[kind.ordinal])
 }
 
 fun ProjectionName.toFLTProjectionName(): StyleProjectionName {

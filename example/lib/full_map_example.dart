@@ -32,35 +32,35 @@ class FullMapExampleState extends State<FullMapExample> {
   }
 
   _onCameraChangeListener(CameraChangedEventData data) {
-    print("CameraChangedEventData: ${data.debugInfo}");
+    debugPrint("CameraChangedEventData: ${data.debugInfo}");
   }
 
   _onResourceRequestListener(ResourceEventData data) {
-    print("ResourceEventData: time: ${data.timeInterval}");
+    debugPrint("ResourceEventData: time: ${data.timeInterval}");
   }
 
   _onMapIdleListener(MapIdleEventData data) {
-    print("MapIdleEventData: timestamp: ${data.timestamp}");
+    debugPrint("MapIdleEventData: timestamp: ${data.timestamp}");
   }
 
   _onMapLoadedListener(MapLoadedEventData data) {
-    print("MapLoadedEventData: time: ${data.timeInterval}");
+    debugPrint("MapLoadedEventData: time: ${data.timeInterval}");
   }
 
   _onMapLoadingErrorListener(MapLoadingErrorEventData data) {
-    print("MapLoadingErrorEventData: timestamp: ${data.timestamp}");
+    debugPrint("MapLoadingErrorEventData: timestamp: ${data.timestamp}");
   }
 
   _onRenderFrameStartedListener(RenderFrameStartedEventData data) {
-    print("RenderFrameStartedEventData: timestamp: ${data.timestamp}");
+    debugPrint("RenderFrameStartedEventData: timestamp: ${data.timestamp}");
   }
 
   _onRenderFrameFinishedListener(RenderFrameFinishedEventData data) {
-    print("RenderFrameFinishedEventData: time: ${data.timeInterval}");
+    debugPrint("RenderFrameFinishedEventData: time: ${data.timeInterval}");
   }
 
   _onSourceAddedListener(SourceAddedEventData data) {
-    print("SourceAddedEventData: timestamp: ${data.timestamp}");
+    debugPrint("SourceAddedEventData: timestamp: ${data.timestamp}");
   }
 
   _onSourceDataLoadedListener(SourceDataLoadedEventData data) {

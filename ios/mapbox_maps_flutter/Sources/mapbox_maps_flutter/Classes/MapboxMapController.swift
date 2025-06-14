@@ -82,8 +82,8 @@ final class MapboxMapController: NSObject, FlutterPlatformView {
         let scaleBarController = ScaleBarController(withMapView: mapView)
         ScaleBarSettingsInterfaceSetup.setUp(binaryMessenger: binaryMessenger.messenger, api: scaleBarController, messageChannelSuffix: binaryMessenger.suffix)
 
-        annotationController = AnnotationController(withMapView: mapView)
-        annotationController!.setup(binaryMessenger: binaryMessenger)
+        annotationController = AnnotationController(withMapView: mapView, messenger: binaryMessenger)
+        annotationController!.setup()
 
         let viewportController = ViewportController(
             viewportManager: mapView.viewport,
@@ -91,6 +91,16 @@ final class MapboxMapController: NSObject, FlutterPlatformView {
             mapboxMap: mapboxMap
         )
         _ViewportMessengerSetup.setUp(binaryMessenger: binaryMessenger.messenger, api: viewportController, messageChannelSuffix: binaryMessenger.suffix)
+
+        let performanceStatisticsController = PerformanceStatisticsController(
+            mapboxMap: mapView.mapboxMap,
+            messenger: binaryMessenger
+        )
+        _PerformanceStatisticsApiSetup.setUp(
+            binaryMessenger: binaryMessenger.messenger,
+            api: performanceStatisticsController,
+            messageChannelSuffix: binaryMessenger.suffix
+        )
 
         super.init()
 
@@ -171,7 +181,8 @@ final class MapboxMapController: NSObject, FlutterPlatformView {
         AttributionSettingsInterfaceSetup.setUp(binaryMessenger: binaryMessenger.messenger, api: nil, messageChannelSuffix: binaryMessenger.suffix)
         CompassSettingsInterfaceSetup.setUp(binaryMessenger: binaryMessenger.messenger, api: nil, messageChannelSuffix: binaryMessenger.suffix)
         ScaleBarSettingsInterfaceSetup.setUp(binaryMessenger: binaryMessenger.messenger, api: nil, messageChannelSuffix: binaryMessenger.suffix)
-        annotationController?.tearDown(messenger: binaryMessenger)
+        annotationController?.tearDown()
         _ViewportMessengerSetup.setUp(binaryMessenger: binaryMessenger.messenger, api: nil, messageChannelSuffix: binaryMessenger.suffix)
+        _PerformanceStatisticsApiSetup.setUp(binaryMessenger: binaryMessenger.messenger, api: nil, messageChannelSuffix: binaryMessenger.suffix)
     }
 }

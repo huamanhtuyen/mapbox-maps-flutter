@@ -22,6 +22,49 @@ class CircleAnnotationManager extends BaseAnnotationManager {
         binaryMessenger: _messenger, messageChannelSuffix: _channelSuffix);
   }
 
+  /// Registers drag event callbacks for the annotations managed by this instance.
+  ///
+  /// - [onBegin]: Triggered when a drag gesture begins on an annotation.
+  /// - [onChanged]: Triggered continuously as the annotation is being dragged.
+  /// - [onEnd]: Triggered when the drag gesture ends.
+  ///
+  /// This method returns a [Cancelable] object that can be used to cancel
+  /// the drag event listener when it's no longer needed.
+  /// Example usage:
+  /// ```dart
+  /// manager.dragEvents(
+  ///   onBegin: (annotation) {
+  ///     print("Drag started for: ${annotation.id}");
+  ///   },
+  ///   onChanged: (annotation) {
+  ///     print("Dragging at: ${annotation.geometry}");
+  ///   },
+  ///   onEnd: (annotation) {
+  ///     print("Drag ended at: ${annotation.geometry}");
+  ///   },
+  /// );
+  /// ```
+  Cancelable dragEvents({
+    Function(CircleAnnotation)? onBegin,
+    Function(CircleAnnotation)? onChanged,
+    Function(CircleAnnotation)? onEnd,
+  }) {
+    return _annotationDragEvents(instanceName: "$_channelSuffix/$id")
+        .cast<CircleAnnotationInteractionContext>()
+        .listen((data) {
+      switch (data.gestureState) {
+        case GestureState.started when onBegin != null:
+          onBegin(data.annotation);
+        case GestureState.changed when onChanged != null:
+          onChanged(data.annotation);
+        case GestureState.ended when onEnd != null:
+          onEnd(data.annotation);
+        default:
+          break;
+      }
+    }).asCancelable();
+  }
+
   /// Create a new annotation with the option.
   Future<CircleAnnotation> create(CircleAnnotationOptions annotation) =>
       _annotationMessenger.create(id, annotation);
@@ -41,6 +84,18 @@ class CircleAnnotationManager extends BaseAnnotationManager {
 
   /// Delete all the annotation added by this manager.
   Future<void> deleteAll() => _annotationMessenger.deleteAll(id);
+
+  /// Selects the base of circle-elevation. Some modes might require precomputed elevation data in the tileset. Default value: "none".
+  @experimental
+  Future<void> setCircleElevationReference(
+          CircleElevationReference circleElevationReference) =>
+      _annotationMessenger.setCircleElevationReference(
+          id, circleElevationReference);
+
+  /// Selects the base of circle-elevation. Some modes might require precomputed elevation data in the tileset. Default value: "none".
+  @experimental
+  Future<CircleElevationReference?> getCircleElevationReference() =>
+      _annotationMessenger.getCircleElevationReference(id);
 
   /// Sorts features in ascending order based on this value. Features with a higher sort key will appear above features with a lower sort key.
   Future<void> setCircleSortKey(double circleSortKey) =>

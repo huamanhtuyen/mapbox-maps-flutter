@@ -22,6 +22,49 @@ class PointAnnotationManager extends BaseAnnotationManager {
         binaryMessenger: _messenger, messageChannelSuffix: _channelSuffix);
   }
 
+  /// Registers drag event callbacks for the annotations managed by this instance.
+  ///
+  /// - [onBegin]: Triggered when a drag gesture begins on an annotation.
+  /// - [onChanged]: Triggered continuously as the annotation is being dragged.
+  /// - [onEnd]: Triggered when the drag gesture ends.
+  ///
+  /// This method returns a [Cancelable] object that can be used to cancel
+  /// the drag event listener when it's no longer needed.
+  /// Example usage:
+  /// ```dart
+  /// manager.dragEvents(
+  ///   onBegin: (annotation) {
+  ///     print("Drag started for: ${annotation.id}");
+  ///   },
+  ///   onChanged: (annotation) {
+  ///     print("Dragging at: ${annotation.geometry}");
+  ///   },
+  ///   onEnd: (annotation) {
+  ///     print("Drag ended at: ${annotation.geometry}");
+  ///   },
+  /// );
+  /// ```
+  Cancelable dragEvents({
+    Function(PointAnnotation)? onBegin,
+    Function(PointAnnotation)? onChanged,
+    Function(PointAnnotation)? onEnd,
+  }) {
+    return _annotationDragEvents(instanceName: "$_channelSuffix/$id")
+        .cast<PointAnnotationInteractionContext>()
+        .listen((data) {
+      switch (data.gestureState) {
+        case GestureState.started when onBegin != null:
+          onBegin(data.annotation);
+        case GestureState.changed when onChanged != null:
+          onChanged(data.annotation);
+        case GestureState.ended when onEnd != null:
+          onEnd(data.annotation);
+        default:
+          break;
+      }
+    }).asCancelable();
+  }
+
   /// Create a new annotation with the option.
   Future<PointAnnotation> create(PointAnnotationOptions annotation) =>
       _annotationMessenger.create(id, annotation);
@@ -426,11 +469,11 @@ class PointAnnotationManager extends BaseAnnotationManager {
   Future<double?> getIconHaloWidth() =>
       _annotationMessenger.getIconHaloWidth(id);
 
-  /// Controls the transition progress between the image variants of icon-image. Zero means the first variant is used, one is the second, and in between they are blended together. Default value: 0. Value range: [0, 1]
+  /// Controls the transition progress between the image variants of icon-image. Zero means the first variant is used, one is the second, and in between they are blended together. Both images should be the same size and have the same type (either raster or vector). Default value: 0. Value range: [0, 1]
   Future<void> setIconImageCrossFade(double iconImageCrossFade) =>
       _annotationMessenger.setIconImageCrossFade(id, iconImageCrossFade);
 
-  /// Controls the transition progress between the image variants of icon-image. Zero means the first variant is used, one is the second, and in between they are blended together. Default value: 0. Value range: [0, 1]
+  /// Controls the transition progress between the image variants of icon-image. Zero means the first variant is used, one is the second, and in between they are blended together. Both images should be the same size and have the same type (either raster or vector). Default value: 0. Value range: [0, 1]
   Future<double?> getIconImageCrossFade() =>
       _annotationMessenger.getIconImageCrossFade(id);
 

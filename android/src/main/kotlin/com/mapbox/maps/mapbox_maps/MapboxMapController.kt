@@ -27,6 +27,7 @@ import com.mapbox.maps.mapbox_maps.pigeons._AnimationManager
 import com.mapbox.maps.mapbox_maps.pigeons._CameraManager
 import com.mapbox.maps.mapbox_maps.pigeons._LocationComponentSettingsInterface
 import com.mapbox.maps.mapbox_maps.pigeons._MapInterface
+import com.mapbox.maps.mapbox_maps.pigeons._PerformanceStatisticsApi
 import com.mapbox.maps.mapbox_maps.pigeons._ViewportMessenger
 import com.mapbox.maps.plugin.animation.camera
 import com.mapbox.maps.plugin.viewport.viewport
@@ -70,6 +71,7 @@ class MapboxMapController(
   private val scaleBarController: ScaleBarController
   private val compassController: CompassController
   private val viewportController: ViewportController
+  private val performanceStatisticsController: PerformanceStatisticsController
 
   private val eventHandler: MapboxEventHandler
 
@@ -144,7 +146,7 @@ class MapboxMapController(
     projectionController = MapProjectionController(mapboxMap)
     mapInterfaceController = MapInterfaceController(mapboxMap, mapView, context)
     animationController = AnimationController(mapboxMap, context)
-    annotationController = AnnotationController(mapView)
+    annotationController = AnnotationController(mapView, messenger, this.channelSuffix)
     locationComponentController = LocationComponentController(mapView, context)
     gestureController = GestureController(mapView, context)
     interactionsController = InteractionsController(mapboxMap, context)
@@ -153,7 +155,7 @@ class MapboxMapController(
     scaleBarController = ScaleBarController(mapView)
     compassController = CompassController(mapView)
     viewportController = ViewportController(mapView.viewport, mapView.camera, context, mapboxMap)
-
+    performanceStatisticsController = PerformanceStatisticsController(mapboxMap, this.messenger, this.channelSuffix)
     changeUserAgent(pluginVersion)
 
     StyleManager.setUp(messenger, styleController, this.channelSuffix)
@@ -161,7 +163,7 @@ class MapboxMapController(
     Projection.setUp(messenger, projectionController, this.channelSuffix)
     _MapInterface.setUp(messenger, mapInterfaceController, this.channelSuffix)
     _AnimationManager.setUp(messenger, animationController, this.channelSuffix)
-    annotationController.setup(messenger, this.channelSuffix)
+    annotationController.setup()
     _LocationComponentSettingsInterface.setUp(messenger, locationComponentController, this.channelSuffix)
     LogoSettingsInterface.setUp(messenger, logoController, this.channelSuffix)
     GesturesSettingsInterface.setUp(messenger, gestureController, this.channelSuffix)
@@ -169,6 +171,7 @@ class MapboxMapController(
     ScaleBarSettingsInterface.setUp(messenger, scaleBarController, this.channelSuffix)
     CompassSettingsInterface.setUp(messenger, compassController, this.channelSuffix)
     _ViewportMessenger.setUp(messenger, viewportController, this.channelSuffix)
+    _PerformanceStatisticsApi.setUp(messenger, performanceStatisticsController, this.channelSuffix)
 
     methodChannel = MethodChannel(messenger, "plugins.flutter.io.$channelSuffix")
     methodChannel.setMethodCallHandler(this)
@@ -194,7 +197,7 @@ class MapboxMapController(
     super.onFlutterViewDetached()
     lifecycleHelper?.dispose()
     lifecycleHelper = null
-    mapView!!.setViewTreeLifecycleOwner(null)
+    mapView?.setViewTreeLifecycleOwner(null)
   }
 
   override fun dispose() {
@@ -203,6 +206,7 @@ class MapboxMapController(
     }
     lifecycleHelper?.dispose()
     lifecycleHelper = null
+    mapView?.setViewTreeLifecycleOwner(null)
     mapView = null
     mapboxMap = null
     methodChannel.setMethodCallHandler(null)
@@ -212,7 +216,7 @@ class MapboxMapController(
     Projection.setUp(messenger, null, channelSuffix)
     _MapInterface.setUp(messenger, null, channelSuffix)
     _AnimationManager.setUp(messenger, null, channelSuffix)
-    annotationController.dispose(messenger, channelSuffix)
+    annotationController.dispose()
     _LocationComponentSettingsInterface.setUp(messenger, null, channelSuffix)
     LogoSettingsInterface.setUp(messenger, null, channelSuffix)
     GesturesSettingsInterface.setUp(messenger, null, channelSuffix)
@@ -220,6 +224,7 @@ class MapboxMapController(
     ScaleBarSettingsInterface.setUp(messenger, null, channelSuffix)
     AttributionSettingsInterface.setUp(messenger, null, channelSuffix)
     _ViewportMessenger.setUp(messenger, null, channelSuffix)
+    _PerformanceStatisticsApi.setUp(messenger, null, channelSuffix)
   }
 
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {

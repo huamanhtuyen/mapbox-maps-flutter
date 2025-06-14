@@ -5,6 +5,8 @@ import 'package:mapbox_maps_example/camera_example.dart';
 import 'package:mapbox_maps_example/circle_annotations_example.dart';
 import 'package:mapbox_maps_example/cluster_example.dart';
 import 'package:mapbox_maps_example/custom_header_example.dart';
+import 'package:mapbox_maps_example/draggable-annotations-example.dart';
+import 'package:mapbox_maps_example/edit_polygon_example.dart';
 import 'package:mapbox_maps_example/model_layer_interactions_example.dart';
 import 'package:mapbox_maps_example/offline_map_example.dart';
 import 'package:mapbox_maps_example/model_layer_example.dart';
@@ -58,6 +60,8 @@ final List<Example> _allPages = <Example>[
   CircleAnnotationExample(),
   PolylineAnnotationExample(),
   PolygonAnnotationExample(),
+  DraggableAnnotationExample(),
+  EditPolygonExample(),
   VectorTileSourceExample(),
   DrawGeoJsonLineExample(),
   ImageSourceExample(),
@@ -78,7 +82,8 @@ class MapsDemo extends StatelessWidget {
   //
   // Alternatively you can replace `String.fromEnvironment("ACCESS_TOKEN")`
   // in the following line with your access token directly.
-  static const String ACCESS_TOKEN = String.fromEnvironment("ACCESS_TOKEN");
+  //static const String ACCESS_TOKEN = String.fromEnvironment("ACCESS_TOKEN");
+  static const String ACCESS_TOKEN = 'pk.eyJ1IjoiaHVhbWFuaHR1eWVuIiwiYSI6ImNtN2xnd3kwZTBjM2EyanEwYzN0bmMxeHQifQ.Yhx2vlSbfRN3xjvlT-f2sA';
 
   void _pushPage(BuildContext context, Example page) async {
     Navigator.of(context).push(MaterialPageRoute<void>(
